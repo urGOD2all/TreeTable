@@ -12,7 +12,13 @@ import javax.swing.table.AbstractTableModel;
  */
 public interface TreeTableModel extends TreeModel {
 
-    // TODO: Doc me if this works
+    /**
+     * Called by the TreeTable constructor to set the JTable model.
+     * This allows operations on the JTable like fireTableStructureChanged.
+     * This is implemented by AbstractTreeTableModel which you should extend in your implementation
+     *
+     * @param tm - TableModel that implements AbstractTableModel
+     */
     public void setTableModel(AbstractTableModel tm);
 
     /**

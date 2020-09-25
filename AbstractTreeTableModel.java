@@ -36,10 +36,19 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
     public AbstractTreeTableModel() {
     }
 
+    // TODO: Look at making this not public if we can, it doesnt need to be called outside of the package
+    /**
+     * Set the JTable model here so we can expose certain table operations
+     *
+     * @param  tm - TableModel that implements AbstractTableModel
+     */
     public void setTableModel(AbstractTableModel tm) {
         tableModel = tm;
     }
 
+    /**
+     * Passes fireTableStructureChanged() call to the JTable.
+     */
     public void fireTableStructureChanged() {
         tableModel.fireTableStructureChanged();
     }
