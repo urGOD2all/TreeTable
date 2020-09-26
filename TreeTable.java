@@ -46,4 +46,26 @@ public class TreeTable extends JTable {
         // Set the model on the table that was passed as parameter
         super.setModel(glue);
     }
+
+    /**
+     * Determines whether or not the root node from the TreeTableModel is visible.
+     * This is a bound property.
+     *
+     * @param rootVisible - true if the root node of the TreeTable is to be displayed
+     */
+    public void setRootVisible(boolean rootVisible) {
+        tree.setRootVisible(rootVisible);
+    }
+
+    /**
+     * Sets the value of the showsRootHandles property, which specifies whether the node handles should be displayed. The default is true.
+     *
+     * This is a bound property.
+     *
+     * @param newValue - true if root handles should be displayed; otherwise, false
+     */
+    public void setShowsRootHandles(boolean newValue) {
+        // Call the JTree version of this to action it.
+        tree.setShowsRootHandles(newValue);
+    }
 }
