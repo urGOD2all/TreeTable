@@ -105,8 +105,6 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
      * Overridden for performance reasons.
      */
     @Override
-    public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {} 
-    @Override
     public void invalidate() {} 
     @Override
     public boolean isOpaque() { return true;}
@@ -120,21 +118,4 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
     public void revalidate() {} 
     @Override
     public void validate() {} 
-   
-    @Override
-    public void firePropertyChange(String propertyName, byte oldValue, byte newValue) {} 
-    @Override
-    public void firePropertyChange(String propertyName, char oldValue, char newValue) {} 
-    @Override
-    public void firePropertyChange(String propertyName, double oldValue, double newValue) {} 
-    @Override
-    public void firePropertyChange(String propertyName, float oldValue, float newValue) {} 
-    @Override
-    public void firePropertyChange(String propertyName, long oldValue, long newValue) {} 
-    @Override
-    public void firePropertyChange(String propertyName, short oldValue, short newValue) {} 
-    // This method as a no-op renders the table odd
-    //public void firePropertyChange(String propertyName, int oldValue, int newValue) {}
-    // This method as a no-op fails to render the table completely
-    //protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {}
 }
