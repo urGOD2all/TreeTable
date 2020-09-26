@@ -11,7 +11,7 @@ import javax.swing.table.TableCellRenderer;
  *
  */
 public class TreeTable extends JTable {
-    private TreeTableCellRenderer treeRenderer;
+    private TreeTableCellRenderer tree;
     private TreeTableCellEditor treeEditor;
 
     /**
@@ -26,22 +26,22 @@ public class TreeTable extends JTable {
         super();
 
         // Setup the renderer for the TreeTable. This renderer must be returned for the expandable column in the model implementation
-        treeRenderer = new TreeTableCellRenderer(this, treeTableModel);
+        tree = new TreeTableCellRenderer(this, treeTableModel);
         // Set the renderer on the TreeTable. This is used when the expandable column (see comment above) is returned by getCellRenderer(...) which is going to be our renderer!
-        setDefaultRenderer(TreeTableModel.class, treeRenderer);
+        setDefaultRenderer(TreeTableModel.class, tree);
 
         // Create a TreeTableSelectionModel
         TreeTableSelectionModel selectionModel = new TreeTableSelectionModel();
         // Set the SelectionModel on the tree
-        treeRenderer.setSelectionModel(selectionModel);
+        tree.setSelectionModel(selectionModel);
         // Set the SelectionModel on the table
         setSelectionModel(selectionModel.getListSelectionModel());
 
         // Setup the editor for the TreeTable, pass the renderer as the tree and this as the table
-        treeEditor = new TreeTableCellEditor(treeRenderer, this);
+        treeEditor = new TreeTableCellEditor(tree, this);
         setDefaultEditor(TreeTableModel.class, treeEditor);
 
-        TreeTableModelGlue glue = new TreeTableModelGlue(treeTableModel, treeRenderer);
+        TreeTableModelGlue glue = new TreeTableModelGlue(treeTableModel, tree);
         treeTableModel.setTableModel(glue);
         // Set the model on the table that was passed as parameter
         super.setModel(glue);
