@@ -5,6 +5,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreePath;
 import java.util.EventListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.event.TreeModelEvent;
 
 /**
  * In the spirit of the Swing developers, this class is designed to implement certain functions for the TreeTable in the same way that the javax.swing.table.AbstractTableModel class does for JTables.
@@ -47,9 +48,82 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
     }
 
     /**
+     * Invoke this method if you've modified the data upon which this model
+     * depends. The model will notify all of its listeners that the model has
+     * changed. It will fire the events, necessary to update the layout caches and
+     * repaint the TreeTable.
+     *
+     * This method will refresh the information about whole TreeTable from the root object underpinning the model.
+     * </p>
+     */
+    public void reload() {
+        int n = getChildCount(getRoot());
+        int[] childIdx = new int[n];
+        Object[] children = new Object[n];
+  
+        for (int i = 0; i < n; i++) {
+            childIdx[i] = i;
+            children[i] = getChild(getRoot(), i);
+        }
+  
+        // Reload the JTree
+        fireTreeStructureChanged(this, new Object[] { getRoot() }, childIdx, children);
+        // Reload the JTable
+        fireTableDataChanged();
+    }
+
+    /**
+     * Invoke this method if you've modified the data upon which this model
+     * depends. The model will notify all of its listeners that the model has
+     * changed. It will fire the events necessary when adding rows and
+     * repaints the TreeTable.
+     *
+     * This is fine as long as you dont have listeners that want to know where the
+     * new data appeared.
+     */
+    public void nodesWereInserted() {
+        // Reload the JTree
+        fireTreeStructureChanged(this, new Object[] { getRoot() }, null, null);
+        // Reload the JTable
+        fireTableDataChanged();
+    }
+
+    /**
+     * Invoke this is you have changed the columns in the TreeTable
+     * calls fireTableStructureChanged() on the JTable component
+     */
+    public void fireTreeTableStructureChanged() {
+        // Should be enough to just reload the table.
+        tableModel.fireTableStructureChanged();
+    }
+
+    /**
+     * fireTreeStructureChanged (from JTree). Only used internally, if needed to expose
+     * publicly, should have the correct name (for TreeTable).
+     * 
+     * @param source the node where the model has changed
+     * @param path the path to the root node
+     * @param childIndices the indices of the affected elements
+     * @param children the affected elements
+     */
+    private void fireTreeStructureChanged(Object source, Object[] path, int[] childIndices, Object[] children) {
+      TreeModelEvent event = new TreeModelEvent(source, path, childIndices, children);
+      TreeModelListener[] listeners = getTreeModelListeners();
+  
+      for (int i = listeners.length - 1; i >= 0; --i) listeners[i].treeStructureChanged(event);
+    }
+
+    /**
+     * Passes fireTableDataChanged() call to the JTable.
+     */
+    private void fireTableDataChanged() {
+        tableModel.fireTableDataChanged();
+    }
+
+    /**
      * Passes fireTableStructureChanged() call to the JTable.
      */
-    public void fireTableStructureChanged() {
+    private void fireTableStructureChanged() {
         tableModel.fireTableStructureChanged();
     }
 
