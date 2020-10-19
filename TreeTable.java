@@ -21,7 +21,7 @@ public class TreeTable extends JTable {
      *
      * @param treeTableModel - TreeTableModel object
      */
-    public TreeTable(TreeTableModel treeTableModel) {
+    public TreeTable(AbstractTreeTableModel treeTableModel) {
         // Call the super class constructor without the model (models are not compatible)
         super();
 
@@ -41,7 +41,9 @@ public class TreeTable extends JTable {
         treeEditor = new TreeTableCellEditor(tree, this);
         setDefaultEditor(TreeTableModel.class, treeEditor);
 
+        // TODO: Facter out the glue, its confusing and makes the model returned by TreeTable different from the one used here
         TreeTableModelGlue glue = new TreeTableModelGlue(treeTableModel, tree);
+        treeTableModel.setTreeComponent(tree);
         treeTableModel.setTableModel(glue);
         // Set the model on the table that was passed as parameter
         super.setModel(glue);

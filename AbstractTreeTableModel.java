@@ -2,6 +2,7 @@ package TreeTable;
 
 import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeModelListener;
+import javax.swing.JTree;
 import javax.swing.tree.TreePath;
 import java.util.EventListener;
 import javax.swing.table.AbstractTableModel;
@@ -30,6 +31,8 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
     protected EventListenerList listenerList = new EventListenerList();
     // Store a reference to the TableModel part of the TreeTable. This will get initialized when passed to the TreeTable constructor and grants access to table only calls
     private AbstractTableModel tableModel;
+    // Store a reference to the JTree component
+    private JTree tree;
 
     /**
      * Default constructor, nothing to do here
@@ -45,6 +48,10 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
      */
     public void setTableModel(AbstractTableModel tm) {
         tableModel = tm;
+    }
+
+    protected void setTreeComponent(TreeTableCellRenderer tree) {
+        this.tree = (JTree) tree;
     }
 
     /**
@@ -157,6 +164,20 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
      */
     public Class<?> getColumnClass(int columnIndex) {
         return Object.class;
+    }
+
+    /**
+     * Find the object at position row. This will query the JTree and find the the TreePath for the row, then return the Object
+     *
+     * @param row - the row in the view being queried
+     * @return Object - Object that contains the tree data at the specified row
+     */
+    public Object nodeForRow(int row) {
+        // Get the path for the object at that row
+        TreePath treePath = tree.getPathForRow(row);
+        System.out.println("returning " + treePath.getLastPathComponent().getClass());
+        // Return the Object at that position in the path
+        return treePath.getLastPathComponent();
     }
 
     /** 
