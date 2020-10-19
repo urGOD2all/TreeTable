@@ -175,7 +175,6 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
     public Object nodeForRow(int row) {
         // Get the path for the object at that row
         TreePath treePath = tree.getPathForRow(row);
-        System.out.println("returning " + treePath.getLastPathComponent().getClass());
         // Return the Object at that position in the path
         return treePath.getLastPathComponent();
     }
