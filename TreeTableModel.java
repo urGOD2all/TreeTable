@@ -13,15 +13,6 @@ import javax.swing.table.AbstractTableModel;
 public interface TreeTableModel extends TreeModel {
 
     /**
-     * Called by the TreeTable constructor to set the JTable model.
-     * This allows operations on the JTable like fireTableStructureChanged.
-     * This is implemented by AbstractTreeTableModel which you should extend in your implementation
-     *
-     * @param tm - TableModel that implements AbstractTableModel
-     */
-    public void setTableModel(AbstractTableModel tm);
-
-    /**
      * Returns the most specific superclass for all the cell values in the column. This is used by the JTable to set up a default renderer and editor for the column.
      * 
      * @param columnIndex - the index of the column

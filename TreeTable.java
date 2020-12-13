@@ -14,6 +14,8 @@ public class TreeTable extends JTable {
     private TreeTableCellRenderer tree;
     private TreeTableCellEditor treeEditor;
 
+    private AbstractTreeTableModel treeTableModel;
+
     /**
      * Contructor for the TreeTable. This takes a TreeTableModel object and configures and glues the JTree and JTable components together.
      *
@@ -24,6 +26,8 @@ public class TreeTable extends JTable {
     public TreeTable(AbstractTreeTableModel treeTableModel) {
         // Call the super class constructor without the model (models are not compatible)
         super();
+
+        this.treeTableModel = treeTableModel;
 
         // Setup the renderer for the TreeTable. This renderer must be returned for the expandable column in the model implementation
         tree = new TreeTableCellRenderer(this, treeTableModel);
@@ -41,12 +45,20 @@ public class TreeTable extends JTable {
         treeEditor = new TreeTableCellEditor(tree, this);
         setDefaultEditor(TreeTableModel.class, treeEditor);
 
-        // TODO: Facter out the glue, its confusing and makes the model returned by TreeTable different from the one used here
-        TreeTableModelGlue glue = new TreeTableModelGlue(treeTableModel, tree);
-        treeTableModel.setTreeComponent(tree);
-        treeTableModel.setTableModel(glue);
+        // Configre the JTree in the TreeTableModel
+        treeTableModel.setupJTree(tree);
         // Set the model on the table that was passed as parameter
-        super.setModel(glue);
+        super.setModel(treeTableModel);
+    }
+
+    /**
+     * Returns the TableModel that provides the data displayed by this JTable.
+     * 
+     * @return the TreeTableModel that provides the data displayed by this TreeTable
+     */
+    @Override
+    public AbstractTreeTableModel getModel() {
+        return treeTableModel;
     }
 
     /**
