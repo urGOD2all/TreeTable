@@ -3,6 +3,8 @@ package TreeTable;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+import java.awt.Component;
+
 /**
  * This class is the TreeTable!
  * To use the TreeTable, first create an appropriate TreeTableModel then pass to TreeTable.
@@ -45,7 +47,7 @@ public class TreeTable extends JTable {
         treeEditor = new TreeTableCellEditor(tree, this);
         setDefaultEditor(TreeTableModel.class, treeEditor);
 
-        // Configre the JTree in the TreeTableModel
+        // Configure the JTree in the TreeTableModel
         treeTableModel.setupJTree(tree);
         // Set the model on the table that was passed as parameter
         super.setModel(treeTableModel);
@@ -81,5 +83,39 @@ public class TreeTable extends JTable {
     public void setShowsRootHandles(boolean newValue) {
         // Call the JTree version of this to action it.
         tree.setShowsRootHandles(newValue);
+    }
+
+    /**
+     * Overrides the prepare renderer from JTable to ensure that the row and column
+     * passed to the renderer gets looked up in the view instead of passing them raw
+     * which would be for the moedel order, This only needs to happen for the call to
+     * renderer.getTableCellRendererComponent because it wont do it itself and the call
+     * to getValueAt in JTable will do this correctly.
+     *
+     * @param renderer - the renderer to prepare
+     * @param row - the row of the cell to render, where 0 is the first row
+     * @param column - the column of the cell to render, where 0 is the first column
+     * @return - the Component under the event location
+     */
+    @Override
+    public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+        // Get the requested value, from JTable.getValueAt (this will convert the indexes from view to model)
+        Object value = getValueAt(row, column);
+
+        boolean isSelected = false;
+        boolean hasFocus = false;
+
+        // Only indicate the selection and focused cell if not printing
+        if (!isPaintingForPrint()) {
+            isSelected = isCellSelected(row, column);
+
+            boolean rowIsLead = (selectionModel.getLeadSelectionIndex() == row);
+            boolean colIsLead = (columnModel.getSelectionModel().getLeadSelectionIndex() == column);
+
+            hasFocus = (rowIsLead && colIsLead) && isFocusOwner();
+        }
+
+        // When calling the renderer, send the converted row and column indexes. This is because it is our responsibility to convert this, not the renderer and if we don't, it will use the wrong indexes
+        return renderer.getTableCellRendererComponent(this, value, isSelected, hasFocus, convertRowIndexToModel(row), convertColumnIndexToModel(column));
     }
 }
