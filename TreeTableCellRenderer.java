@@ -1,9 +1,11 @@
 package TreeTable;
 
 import javax.swing.JTree;
+import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.Component;
 import javax.swing.JTable;
+import java.awt.Color;
 import java.awt.Graphics;
 // Only imported to override repaint for performance
 import java.awt.Rectangle;
@@ -18,9 +20,11 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
     private TreeTable treeTable;
     // Store a reference to the row that was rendered last
     private int lastRenderedRow;
+    // Store a reference to the JTree cell renderer
+    private DefaultTreeCellRenderer treeRenderer;
 
     /**
-     * Constructor takes a TreeTable and TreeTableMode.
+     * Constructor takes a TreeTable and TreeTableModel.
      * Sets up the model and ensures that the JTree and JTable componets have the same row height.
      * This is important to ensure that the TreeTable renders correctly
      *
@@ -33,6 +37,28 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
 
         // Set the row height of the JTree to match that of the JTable when initialized
         super.setRowHeight(treeTable.getRowHeight());
+
+        // Get the JTree renderer
+        treeRenderer = (DefaultTreeCellRenderer) this.getCellRenderer();
+    }
+
+    // TODO: All JTree methods need to be checked (like isRowSelected) to see if they also require having row input converted to the view row
+    /**
+     * Overrides this method from JTree so that the row is converted to the correct
+     * row from the View. This will ensure after sorting that the correct rows are
+     * selected.
+     *
+     * @param int - row to test for selection in the view
+     * @return boolean - true if selected in the view, else false.
+     */
+    @Override
+    public boolean isRowSelected(int row) {
+        // Only bother trying if the row could exist and the treeTable reference is not null (this can happen if this method is called when invoking the JTree constructor with the model)
+        if(row >= 0 && treeTable != null) {
+            // Pass the corrected row to the supers method
+            return super.isRowSelected(treeTable.convertRowIndexToView(row));
+        }
+        return false;
     }
 
     /**
@@ -77,9 +103,11 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
         // Update the reference to the last row that was drawn. This is used to ensure the indented rows are renderer in the correct location
         lastRenderedRow = row;
         // Check if this item was selected, if it was set the background and foreground of the cell to be selected otherwise only the text is
+        // TODO: Check this over here. What I think needs to happen is that when the TreeTable selection colours are changed it should be reflected in both the JTree and JTable. 
+        // TODO:    I need to double check that this is whats going on here, this is whisky fueled rush code
         if(isSelected) {
             this.setBackground(table.getSelectionBackground());
-            this.setForeground(table.getSelectionForeground());
+            this.setForeground(this.getForeground());
         }
         else {
             this.setBackground(table.getBackground());
@@ -87,6 +115,24 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
         }
 
         return this;
+    }
+
+    /**
+     * Overrides JComponent.setForeground to assign the specified color to the foreground. This works in the same way that it does in a JTable.
+     */
+    @Override
+    public void setForeground(Color c) {
+        treeRenderer.setTextNonSelectionColor(c);
+        treeRenderer.setTextSelectionColor(c);
+    }
+
+    /**
+     * Gets the foreground of this component
+     */
+    @Override
+    public Color getForeground() {
+        // TODO: I think I want this referencing a common point like the TreeTable (JTable). This is similar to the TODO in getTableCellRendererComponent above
+        return treeRenderer.getTextNonSelectionColor();
     }
 
     /**
