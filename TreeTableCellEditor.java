@@ -49,6 +49,7 @@ public class TreeTableCellEditor extends AbstractCellEditor implements TableCell
      *
      * @return value from the table that is currently being edited 
      */
+    @Override
     public Object getCellEditorValue() {
         return value;
     }
@@ -66,10 +67,10 @@ public class TreeTableCellEditor extends AbstractCellEditor implements TableCell
      * @return the component for editing (tree)
      *
      */
+    @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         // Get the value from the table for the cell that is being edited
         this.setValue(table.getValueAt(row, column));
-
         // Return the tree
         return tree;
     }
@@ -81,6 +82,7 @@ public class TreeTableCellEditor extends AbstractCellEditor implements TableCell
      *
      * @return false - to stop the event propogating to the tree
      */
+    @Override
     public boolean isCellEditable(EventObject event)
     {
         // Send the event to the JTree to be actioned
