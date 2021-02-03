@@ -3,7 +3,6 @@ package TreeTable;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.JTree;
 import javax.swing.tree.TreePath;
-import javax.swing.event.EventListenerList;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeModelEvent;
@@ -30,9 +29,6 @@ import java.util.EventListener;
 public abstract class AbstractTreeTableModel extends AbstractTableModel implements TreeTableModel {
     // Set the version ID for serialized objects
     static final long serialVersionUID = 1L;
-
-    // Storage for the listeners registered with this model. Instantiated here because it means users don't need to call this constructor in their implementation (like JTable)
-    protected EventListenerList listenerList = new EventListenerList();
 
     // Reference to the JTree
     private JTree tree;
@@ -211,6 +207,9 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
         // Reload the JTree
         fireTreeStructureChanged(this, new Object[] { getRoot() }, null, null);
         // Reload the JTable
+        // TODO: This doesnt work when the table is empty and rows are added. There appears to be a race between the Tree and the Table.
+        // What happens is that getRowCount() from the model returns 0 when there is data in the model. The Tree tries to update from the data in the model and checks in with
+        // the table to see what the index is in the view. This will fail with index out of bounds because the Table still thinks there are 0 rows.
         fireTableDataChanged();
     }
 
@@ -254,7 +253,7 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
      * @return An array of listeners (possibly empty).
      */
     public <T extends EventListener> T[] getListeners(Class<T> listenerType) {
-      return listenerList.getListeners(listenerType);
+        return listenerList.getListeners(listenerType);
     }
 
     /**
