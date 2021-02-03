@@ -30,6 +30,12 @@ public class ExampleTreeTable {
         top.add(next3);
         top.add(next4);
 
+        for(int i = 0; i < 100; i++) {
+        System.out.println("Adding HERP" + i);
+            top.add(new DefaultMutableTreeNode("HERP" + i));
+        }
+
+
         ExampleTreeTableModel model = new ExampleTreeTableModel(top);
         // TODO: need a TreeTable here that will take model
         TreeTable tt = new TreeTable(model);
