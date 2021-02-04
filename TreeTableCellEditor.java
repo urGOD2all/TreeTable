@@ -76,17 +76,17 @@ public class TreeTableCellEditor extends AbstractCellEditor implements TableCell
     }
 
     /**
-     * Dispatches the event to the JTree so that the row will expand
+     * Overrides the isCellEditable for the CellEditor on the JTable to always return false.
+     * If true is returned here a collapse/expand event occurs on the root node.
+     * TODO: I would like to understand why this collapse/expand event occurs. Need to trace it through to see if it can be stopped elsewhere.
      * 
      * @param event the event to check
      *
-     * @return false - to stop the event propogating to the tree
+     * @return false - to stop the event propogating to the JTree root node
      */
     @Override
     public boolean isCellEditable(EventObject event)
     {
-        // Send the event to the JTree to be actioned
-        tree.dispatchEvent((AWTEvent) event);
         // Ensure we never return true, this would send mouse events through to the tree that would always action the collapse/expand of the root node
         return false;
     }

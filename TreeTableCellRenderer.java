@@ -10,6 +10,8 @@ import java.awt.Graphics;
 // Only imported to override repaint for performance
 import java.awt.Rectangle;
 
+import javax.swing.tree.TreePath;
+
 /**
  * This class is responsible for rendering individual cells in the TreeTable. Unlike the DefaultTableCellRenderer which extends JLabel, we 
  * extend JTree here so that rows are expandable.
@@ -22,6 +24,9 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
     private int lastRenderedRow;
     // Store a reference to the JTree cell renderer
     private DefaultTreeCellRenderer treeRenderer;
+
+    // TODO: The following TODO Needs checking, I think the JTable is already converting it so I don't think it needs converting...
+    // TODO: All JTree methods need to be checked (like isRowSelected) to see if they also require having row input converted to the view row. This needs to happen if the view has been sorted
 
     /**
      * Constructor takes a TreeTable and TreeTableModel.
@@ -42,7 +47,6 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
         treeRenderer = (DefaultTreeCellRenderer) this.getCellRenderer();
     }
 
-    // TODO: All JTree methods need to be checked (like isRowSelected) to see if they also require having row input converted to the view row
     /**
      * Overrides this method from JTree so that the row is converted to the correct
      * row from the View. This will ensure after sorting that the correct rows are
@@ -60,6 +64,57 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
         }
         return false;
     }
+
+    /**
+     * Overrides this method from JTree so that the row is converted to the correct
+     * row from the View. This will ensure after sorting that the correct rows are
+     * collapsed.
+     *
+     * @param int - row to collapse in the view
+     */
+    @Override
+    public void collapseRow(int row) {
+        if(row >= 0 && treeTable != null) super.collapseRow(treeTable.convertRowIndexToView(row));
+    }
+
+    /**
+     * Overrides this method from JTree so that the row is converted to the correct
+     * row from the View. This will ensure after sorting that the correct rows are
+     * expanded
+     *
+     * @param int - row to expand in the view
+     */
+    @Override
+    public void expandRow(int row) {
+        if(row >= 0 && treeTable != null) super.expandRow(treeTable.convertRowIndexToView(row));
+    }
+
+    /**
+     * TODO: Needs docs
+     */
+    public TreePath getPathForRow(int row) {
+        // TODO: Use this to validate the TODO checking from the top
+        //System.out.println("CALLED for row " + row);
+        //System.out.println("CALLED for converted row " + treeTable.convertRowIndexToView(row));
+        return super.getPathForRow(row);
+    }
+
+
+    /**
+     * This is called by the TreeTable to expand and collapse rows when
+     * they have been clicked on.
+     *
+     * @param int - row that requires its expand/collapse state toggling.
+     */
+    public void toggleExpandedState(int row) {
+        // Get the TreePath
+        TreePath rowPath = getPathForRow(row);
+        // If the TreePath for this row has already been expanded, collapse it
+        if(isExpanded(rowPath)) collapsePath(rowPath);
+        // else it is collapsed so expand it
+        else expandPath(rowPath);
+    }
+
 
     /**
      * When setting the bounds of the TreeTable ensure that the JTree and JTable bounds match.

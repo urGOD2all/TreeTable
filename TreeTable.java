@@ -5,6 +5,8 @@ import javax.swing.table.TableCellRenderer;
 
 import java.awt.Component;
 
+import java.util.EventObject;
+
 /**
  * This class is the TreeTable!
  * To use the TreeTable, first create an appropriate TreeTableModel then pass to TreeTable.
@@ -30,6 +32,8 @@ public class TreeTable extends JTable {
         super();
 
         this.treeTableModel = treeTableModel;
+        // Set the model on the table that was passed as parameter
+        super.setModel(treeTableModel);
 
         // Setup the renderer for the TreeTable. This renderer must be returned for the expandable column in the model implementation
         tree = new TreeTableCellRenderer(this, treeTableModel);
@@ -44,13 +48,12 @@ public class TreeTable extends JTable {
         setSelectionModel(selectionModel.getListSelectionModel());
 
         // Setup the editor for the TreeTable, pass the renderer as the tree and this as the table
+        // This is used for expanding
         treeEditor = new TreeTableCellEditor(tree, this);
         setDefaultEditor(TreeTableModel.class, treeEditor);
 
         // Configure the JTree in the TreeTableModel
         treeTableModel.setupJTree(tree);
-        // Set the model on the table that was passed as parameter
-        super.setModel(treeTableModel);
     }
 
     /**
@@ -117,5 +120,27 @@ public class TreeTable extends JTable {
 
         // When calling the renderer, send the converted row and column indexes. This is because it is our responsibility to convert this, not the renderer and if we don't, it will use the wrong indexes
         return renderer.getTableCellRendererComponent(this, value, isSelected, hasFocus, convertRowIndexToModel(row), convertColumnIndexToModel(column));
+    }
+
+    /**
+     * Override from JTable so that we can instruct the tree to expand the element being edited.
+     *
+     * @param row - row being edited
+     * @param column - column being edited
+     * @param e - event to pass into shouldSelectCell; note that as of Java 2 platform v1.2, the call to shouldSelectCell is no longer made
+     * @return - false if for any reason the cell cannot be edited, or if the indices are invalid
+     */
+    @Override
+    public boolean editCellAt(int row, int column, EventObject e) {
+        // TODO: Should check that this is an EventObject that contains an event that should expand the tree (like double clicking or clicking the expand item etc)
+        tree.toggleExpandedState(convertRowIndexToModel(row));
+        return super.editCellAt(row, column, e);
+    }
+
+    // TODO: This is a bit of a dirty hack, see the TODO in nodesWereInserted
+    @Override
+    public int convertRowIndexToView(int modelRowIndex) {
+        if(getRowCount() == 0) return 0;
+        return super.convertRowIndexToView(modelRowIndex);
     }
 }
