@@ -3,9 +3,17 @@ package TreeTable;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
+import javax.swing.tree.TreePath;
+
 import java.awt.Component;
 
 import java.util.EventObject;
+import java.awt.event.MouseEvent;
+
+import javax.swing.UIManager;
+import javax.swing.Icon;
+import java.awt.Insets;
+
 
 /**
  * This class is the TreeTable!
@@ -19,6 +27,16 @@ public class TreeTable extends JTable {
     private TreeTableCellEditor treeEditor;
 
     private AbstractTreeTableModel treeTableModel;
+
+    // Stores the orientation of the tree
+    private boolean leftToRight;
+    // Stores the child indentation size
+    private Integer childIndent;
+    private Integer leftChildIndent;
+    private Integer rightChildIndent;
+
+    // Stores the Icon used for expanded rows
+    private Icon expandedIcon;
 
     /**
      * Contructor for the TreeTable. This takes a TreeTableModel object and configures and glues the JTree and JTable components together.
@@ -54,6 +72,10 @@ public class TreeTable extends JTable {
 
         // Configure the JTree in the TreeTableModel
         treeTableModel.setupJTree(tree);
+
+        // TODO: Implement a property change listener for this
+        // Get the orientation of the tree
+        leftToRight = tree.getComponentOrientation().isLeftToRight();
     }
 
     /**
@@ -132,8 +154,17 @@ public class TreeTable extends JTable {
      */
     @Override
     public boolean editCellAt(int row, int column, EventObject e) {
-        // TODO: Should check that this is an EventObject that contains an event that should expand the tree (like double clicking or clicking the expand item etc)
-        tree.toggleExpandedState(convertRowIndexToModel(row));
+        // Check for mouse event and expand if relevant
+        try {
+            MouseEvent me = (MouseEvent) e;
+            // TODO: Need to expand on this to add drag and drop support
+            // If the mouse click is within the expandable control area, expand the row in the view
+            if(isLocationInExpandControl(tree.getPathForRow(convertRowIndexToModel(row)), me.getX(), me.getY())) tree.toggleExpandedState(convertRowIndexToModel(row));
+        }
+        // Catch any exceptions, do nothing
+        catch(Exception ex) {
+            //System.out.println(ex.getMessage());
+        }
         return super.editCellAt(row, column, e);
     }
 
@@ -142,5 +173,148 @@ public class TreeTable extends JTable {
     public int convertRowIndexToView(int modelRowIndex) {
         if(getRowCount() == 0) return 0;
         return super.convertRowIndexToView(modelRowIndex);
+    }
+
+    /**
+     * Lifted from BasicTreeUI and adapted
+     *
+     * Returns {@code true} if {@code mouseX} and {@code mouseY} fall
+     * in the area of row that is used to expand/collapse the node and
+     * the node at {@code row} does not represent a leaf.
+     *
+     * @param path a tree path
+     * @param mouseX an X coordinate
+     * @param mouseY an Y coordinate
+     * @return {@code true} if the mouse cursor fall in the area of row that
+     *         is used to expand/collapse the node and the node is not a leaf.
+     */
+    protected boolean isLocationInExpandControl(TreePath path, int mouseX, int mouseY) {
+        if(path != null && !treeTableModel.isLeaf(path.getLastPathComponent())) {
+            int boxWidth;
+            Insets i = tree.getInsets();
+
+            if(getExpandedIcon() != null) boxWidth = getExpandedIcon().getIconWidth();
+            else boxWidth = 8;
+
+            int boxLeftX = getRowX(tree.getRowForPath(path), path.getPathCount() - 1);
+
+            if (leftToRight) boxLeftX = boxLeftX + i.left - getRightChildIndent() + 1;
+            else boxLeftX = tree.getWidth() - boxLeftX - i.right + getRightChildIndent() - 1;
+
+            boxLeftX = findCenteredX(boxLeftX, boxWidth);
+
+            return (mouseX >= boxLeftX && mouseX < (boxLeftX + boxWidth));
+        }
+        return false;
+    }
+
+    // TODO: Implement support for different icons for each row
+    // TODO: Implement all the icons
+    /**
+     * Set the expanded icon for all rows to newIcon
+     *
+     * @param newIcon - Icon object to use for all rows
+     */
+    public void setExpandedIcon(Icon newIcon) {
+        expandedIcon = newIcon;
+    }
+
+    /**
+     * Returns the current expanded row Icon object
+     *
+     * @return Icon used for expanded rows
+     */
+    public Icon getExpandedIcon() {
+        if(expandedIcon == null) setExpandedIcon((Icon)UIManager.get( "Tree.expandedIcon" ));
+        return expandedIcon;
+    }
+
+    private int getRowX(int row, int depth) {
+        return getChildIndent() * (depth + getDepthOffset());
+    }
+
+    /**
+     * Updates the childIndent variable with the left and right indentation sizes
+     */
+    private void updateChildIndent() {
+        childIndent = getLeftChildIndent() + getRightChildIndent();
+    }
+
+    /**
+     * Update the leftChildIndent variable
+     */
+    private void updateLeftChildIndent() {
+        leftChildIndent = (Integer) UIManager.get("Tree.leftChildIndent");
+    }
+
+    /**
+     * Update the rightChildIndent variable
+     */
+    private void updateRightChildIndent() {
+        rightChildIndent = (Integer) UIManager.get("Tree.rightChildIndent");
+    }
+
+    /**
+     * Get the child indent size
+     *
+     * return int - left + right child indentation
+     */
+    private int getChildIndent() {
+        if(childIndent == null) updateChildIndent();
+        return childIndent;
+    }
+
+    /**
+     * TODO: Add a property change listener
+     *
+     * Return the left child indentation size
+     *
+     * @return int - left child indent size
+     */
+    private int getLeftChildIndent() {
+        if(leftChildIndent == null) updateLeftChildIndent();
+        return leftChildIndent;
+    }
+
+    /**
+     * TODO: Add a property change listener
+     *
+     * Return the right Child indent size
+     *
+     * @return int - right child indent size
+     */
+    private int getRightChildIndent() {
+        if(rightChildIndent == null) updateRightChildIndent();
+        return rightChildIndent;
+    }
+
+    /**
+     * TODO: Turn this into an update and call it from the methods it calls
+     * Adapted code from BasicTreeUI
+     */
+    private int getDepthOffset() {
+        if(tree.isRootVisible()) {
+            if(tree.getShowsRootHandles())
+                //depthOffset = 1;
+                return 1;
+            else
+                //depthOffset = 0;
+                return 0;
+        }
+        else if(!tree.getShowsRootHandles())
+            //depthOffset = -1;
+            return -1;
+        else
+            //depthOffset = 0;
+            return 0;
+    }
+
+    /**
+     * Lifted from BasicTreeUI
+     */
+    private int findCenteredX(int x, int iconWidth) {
+        return leftToRight
+               ? x - (int)Math.ceil(iconWidth / 2.0)
+               : x - (int)Math.floor(iconWidth / 2.0);
     }
 }
