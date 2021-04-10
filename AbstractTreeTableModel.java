@@ -265,4 +265,92 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
      */
     public void valueForPathChanged(TreePath path, Object newValue) {
     }
+
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Notifies all listeners that have registered interest for notification on this event type. The event instance is lazily created using the parameters passed into the fire method.
+     *
+     * @param source - the source of the TreeModelEvent; typically this
+     * @param path - the path to the parent the nodes were added to
+     * @param childIndices - the indices of the new elements
+     * @param children - the new elements
+     *
+     */
+    private void fireTreeNodesInserted(Object source, Object[] path, int[] childIndices, Object[] children) {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        TreeModelEvent e = null;
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==TreeModelListener.class) {
+                // Lazily create the event:
+                if (e == null) e = new TreeModelEvent(source, path, childIndices, children);
+                ((TreeModelListener)listeners[i+1]).treeNodesInserted(e);
+            }
+        }
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Invoke this method after you've removed some TreeNodes from node.
+     * childIndices should be the index of the removed elements and must be sorted in ascending order.
+     * removedChildren should be the array of the children objects that were removed.
+     *
+     */
+    public void nodesWereInserted(TreeTableNode node, int[] childIndices) {
+        if(listenerList != null && node != null && childIndices != null && childIndices.length > 0) {
+            int               cCount = childIndices.length;
+            Object[]          newChildren = new Object[cCount];
+
+            for(int counter = 0; counter < cCount; counter++)
+                newChildren[counter] = node.getChildAt(childIndices[counter]);
+
+            fireTreeNodesInserted(this, getPathToRoot(node, 0), childIndices, newChildren);
+            // Inform the JTable of the change
+            fireTableDataChanged();
+        }
+    }
+
+    /**
+     * Cribbed from DefaultMutableTreeNode
+     *
+     * Builds the parents of node up to and including the root node,
+     * where the original node is the last element in the returned array.
+     * The length of the returned array gives the node's depth in the
+     * tree.
+     *
+     * @param aNode  the TreeNode to get the path for
+     * @param depth  an int giving the number of steps already taken towards
+     *        the root (on recursive calls), used to size the returned array
+     * @return an array of TreeNodes giving the path from the root to the
+     *         specified node
+     */
+    private TreeTableNode[] getPathToRoot(TreeTableNode aNode, int depth) {
+        TreeTableNode[]              retNodes;
+        // This method recurses, traversing towards the root in order
+        // size the array. On the way back, it fills in the nodes,
+        // starting from the root and working back to the original node.
+
+        /* Check for null, in case someone passed in a null node, or
+           they passed in an element that isn't rooted at root. */
+        if(aNode == null) {
+            if(depth == 0)
+                return null;
+            else
+                retNodes = new TreeTableNode[depth];
+        }
+        else {
+            depth++;
+            if(aNode == getRoot())
+                retNodes = new TreeTableNode[depth];
+            else
+                retNodes = getPathToRoot(aNode.getParent(), depth);
+            retNodes[retNodes.length - depth] = aNode;
+        }
+        return retNodes;
+    }
 }
