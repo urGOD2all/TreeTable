@@ -296,6 +296,39 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
     /**
      * Cribbed from DefaultTreeModel
      *
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created using the parameters passed into
+     * the fire method.
+     *
+     * @param source the source of the {@code TreeModelEvent};
+     *               typically {@code this}
+     * @param path the path to the parent the nodes were removed from
+     * @param childIndices the indices of the removed elements
+     * @param children the removed elements
+     */
+    private void fireTreeNodesRemoved(Object source, Object[] path,
+                                        int[] childIndices,
+                                        Object[] children) {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        TreeModelEvent e = null;
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==TreeModelListener.class) {
+                // Lazily create the event:
+                if (e == null)
+                    e = new TreeModelEvent(source, path,
+                                           childIndices, children);
+                ((TreeModelListener)listeners[i+1]).treeNodesRemoved(e);
+            }
+        }
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
      * Invoke this method after you've removed some TreeNodes from node.
      * childIndices should be the index of the removed elements and must be sorted in ascending order.
      * removedChildren should be the array of the children objects that were removed.
@@ -313,6 +346,67 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
             // Inform the JTable of the change
             fireTableDataChanged();
         }
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Invoke this method after you've removed some TreeNodes from
+     * node.  childIndices should be the index of the removed elements and
+     * must be sorted in ascending order. And removedChildren should be
+     * the array of the children objects that were removed.
+     *
+     * @param node             parent node which childred were removed
+     * @param childIndices     indexes of removed childs
+     * @param removedChildren  array of the children objects that were removed
+     */
+    public void nodesWereRemoved(TreeTableNode node, int[] childIndices, Object[] removedChildren) {
+        if(node != null && childIndices != null) {
+            fireTreeNodesRemoved(this, getPathToRoot(node), childIndices,
+                                 removedChildren);
+            // Inform the JTable of the change
+            fireTableDataChanged();
+        }
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Message this to remove node from its parent. This will message
+     * nodesWereRemoved to create the appropriate event. This is the
+     * preferred way to remove a node as it handles the event creation
+     * for you.
+     *
+     * @param node the node to be removed from it's parrent
+     */
+    public void removeNodeFromParent(TreeTableNode node) {
+        TreeTableNode         parent = (TreeTableNode)node.getParent();
+
+        if(parent == null)
+            throw new IllegalArgumentException("node does not have a parent.");
+
+        int[]            childIndex = new int[1];
+        Object[]         removedArray = new Object[1];
+
+        childIndex[0] = parent.getIndex(node);
+        parent.remove(childIndex[0]);
+        removedArray[0] = node;
+        nodesWereRemoved(parent, childIndex, removedArray);
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Builds the parents of node up to and including the root node,
+     * where the original node is the last element in the returned array.
+     * The length of the returned array gives the node's depth in the
+     * tree.
+     *
+     * @param aNode the TreeNode to get the path for
+     * @return an array of TreeNodes giving the path from the root
+     */
+    public TreeTableNode[] getPathToRoot(TreeTableNode aNode) {
+        return getPathToRoot(aNode, 0);
     }
 
     /**
