@@ -90,17 +90,6 @@ public class TreeTableCellRenderer extends JTree implements TableCellRenderer {
     }
 
     /**
-     * TODO: Needs docs
-     */
-    public TreePath getPathForRow(int row) {
-        // TODO: Use this to validate the TODO checking from the top
-        //System.out.println("CALLED for row " + row);
-        //System.out.println("CALLED for converted row " + treeTable.convertRowIndexToView(row));
-        return super.getPathForRow(row);
-    }
-
-
-    /**
      * This is called by the TreeTable to expand and collapse rows when
      * they have been clicked on.
      *
