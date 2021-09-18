@@ -161,12 +161,53 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
     }
 
     /**
-     * Invoke this is you have changed the columns in the TreeTable
+     * Invoke this if you have changed the columns in the TreeTable
      * calls fireTableStructureChanged() on the JTable component
      */
     public void fireTreeTableStructureChanged() {
         // Should be enough to just reload the table.
         fireTableStructureChanged();
+    }
+
+    /**
+     * Invoke this if you have changed the data in TreeTable cells.
+     * Calls fireTableRowsUpdated on all rows!
+     */
+    public void fireTreeTableRowsUpdated() {
+        // Notifies all listeners that all rows have changed. Probably not the best performance...
+        fireTableRowsUpdated(0, getRowCount()-1);
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Notifies all listeners that have registered interest for
+     * notification on this event type.  The event instance
+     * is lazily created using the parameters passed into
+     * the fire method.
+     *
+     * @param source the source of the {@code TreeModelEvent};
+     *               typically {@code this}
+     * @param path the path to the parent of the nodes that changed; use
+     *             {@code null} to identify the root has changed
+     * @param childIndices the indices of the changed elements
+     * @param children the changed elements
+     */
+    protected void fireTreeNodesChanged(Object source, Object[] path, int[] childIndices, Object[] children) {
+        // Guaranteed to return a non-null array
+        Object[] listeners = listenerList.getListenerList();
+        TreeModelEvent e = null;
+        // Process the listeners last to first, notifying
+        // those that are interested in this event
+        for (int i = listeners.length-2; i>=0; i-=2) {
+            if (listeners[i]==TreeModelListener.class) {
+                // Lazily create the event:
+                if (e == null)
+                    e = new TreeModelEvent(source, path,
+                                           childIndices, children);
+                ((TreeModelListener)listeners[i+1]).treeNodesChanged(e);
+            }
+        }
     }
 
     /**
@@ -191,7 +232,7 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
         // Reload the JTree
         fireTreeStructureChanged(this, new Object[] { getRoot() }, childIdx, children);
         // Reload the JTable
-        fireTableDataChanged();
+        fireTreeTableRowsUpdated();
     }
 
     /**
@@ -211,6 +252,63 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
         // What happens is that getRowCount() from the model returns 0 when there is data in the model. The Tree tries to update from the data in the model and checks in with
         // the table to see what the index is in the view. This will fail with index out of bounds because the Table still thinks there are 0 rows.
         fireTableDataChanged();
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Invoke this method after you've changed how node is to be
+     * represented in the tree.
+     *
+     * @param node the changed node
+     */
+    public void nodeChanged(TreeTableNode node) {
+        if(listenerList != null && node != null) {
+            TreeTableNode         parent = node.getParent();
+
+            if(parent != null) {
+                int        anIndex = parent.getIndex(node);
+                if(anIndex != -1) {
+                    int[]        cIndexs = new int[1];
+
+                    cIndexs[0] = anIndex;
+                    nodesChanged(parent, cIndexs);
+                }
+            }
+            else if (node == getRoot()) {
+                nodesChanged(node, null);
+            }
+        }
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Invoke this method after you've changed how the children identified by
+     * childIndicies are to be represented in the tree.
+     *
+     * @param node         changed node
+     * @param childIndices indexes of changed children
+     */
+    public void nodesChanged(TreeTableNode node, int[] childIndices) {
+        if(node != null) {
+            if (childIndices != null) {
+                int            cCount = childIndices.length;
+
+                if(cCount > 0) {
+                    Object[]       cChildren = new Object[cCount];
+
+                    for(int counter = 0; counter < cCount; counter++)
+                        cChildren[counter] = node.getChildAt
+                            (childIndices[counter]);
+                    fireTreeNodesChanged(this, getPathToRoot(node),
+                                         childIndices, cChildren);
+                }
+            }
+            else if (node == getRoot()) {
+                fireTreeNodesChanged(this, getPathToRoot(node), null, null);
+            }
+        }
     }
 
     /**
@@ -258,14 +356,42 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
 
     /**
      * Messaged when the user has altered the value for the item identified by path to newValue. If newValue signifies a truly new value the model should post a treeNodesChanged event.
-     * Because this abstract implementation is designed not to be editable it does nothing.
+     * This method will update all columns. To update a single column, use valueForPathChanged(TreePath, int) to specify the column
+     *
+     * Selection will be lost if the getRowForPath() method doesn't find the path specified and the update may not work correctly. Make sure the path passed is correct!
      *
      * @param path - path to the node that the user has altered
      * @param newValue - the new value from the TreeCellEditor
      */
     public void valueForPathChanged(TreePath path, Object newValue) {
+        TreeTableNode   aNode = (TreeTableNode)path.getLastPathComponent();
+
+        // TODO: What's the point in this call or the second param (newValue) ?
+        //aNode.setUserObject(newValue);
+        // Fire the events that this node has changed
+        nodeChanged(aNode);
+        // Update all the columns for the row that changed. This has to be done because this method is generic and doesn't specify a column!
+        //    Selection will be lost if the getRowForPath() method doesn't find the path specified and the update may not work correctly. Make sure the path passed is correct!
+        for(int col = 0; col < getColumnCount(); col++) fireTableCellUpdated(tree.getRowForPath(path), col);
     }
 
+    /**
+     * Same as valueForPathChanged(TreePath, Object) but this allows the user methods to specify which column has been updated.
+     *
+     * Selection will be lost if the getRowForPath() method doesn't find the path specified and the update may not work correctly. Make sure the path passed is correct!
+     *
+     * @param path - path to the node that the user has altered
+     * @param int - column number that has been changed.
+     */
+    public void valueForPathChanged(TreePath path, int column) {
+        TreeTableNode   aNode = (TreeTableNode) path.getLastPathComponent();
+
+        // Fire the events that this node has changed
+        nodeChanged(aNode);
+
+        // Fire the event to Update the specified column of this row
+        fireTableCellUpdated(tree.getRowForPath(path), column);
+    }
 
     /**
      * Cribbed from DefaultTreeModel
@@ -367,6 +493,27 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
             // Inform the JTable of the change
             fireTableDataChanged();
         }
+    }
+
+    /**
+     * Cribbed from DefaultTreeModel
+     *
+     * Invoked this to insert newChild at location index in parents children.
+     * This will then message nodesWereInserted to create the appropriate
+     * event. This is the preferred way to add children as it will create
+     * the appropriate event.
+     *
+     * @param newChild  child node to be inserted
+     * @param parent    node to which children new node will be added
+     * @param index     index of parent's children
+     */
+    public void insertNodeInto(TreeTableNode newChild, TreeTableNode parent, int index){
+        parent.insert(newChild, index);
+
+        int[]           newIndexs = new int[1];
+
+        newIndexs[0] = index;
+        nodesWereInserted(parent, newIndexs);
     }
 
     /**
