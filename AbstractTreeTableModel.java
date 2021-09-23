@@ -514,6 +514,7 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
 
         newIndexs[0] = index;
         nodesWereInserted(parent, newIndexs);
+        if(getRowCount() == 0) nodesWereInserted();
     }
 
     /**
