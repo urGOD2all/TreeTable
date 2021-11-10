@@ -395,7 +395,6 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
         int row = tree.getRowForPath(path);
         // Fire the event to update the specified cell provided that it is visible to the JTable
         if (row >= 0) fireTableCellUpdated(row, column);
-        }
     }
 
     /**
