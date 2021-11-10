@@ -358,7 +358,7 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
      * Messaged when the user has altered the value for the item identified by path to newValue. If newValue signifies a truly new value the model should post a treeNodesChanged event.
      * This method will update all columns. To update a single column, use valueForPathChanged(TreePath, int) to specify the column
      *
-     * Selection will be lost if the getRowForPath() method doesn't find the path specified and the update may not work correctly. Make sure the path passed is correct!
+     * The row will only get updated if getRowForPath() method can find the row (and it is not under a collapsed parent.)
      *
      * @param path - path to the node that the user has altered
      * @param newValue - the new value from the TreeCellEditor
@@ -370,15 +370,17 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
         //aNode.setUserObject(newValue);
         // Fire the events that this node has changed
         nodeChanged(aNode);
-        // Update all the columns for the row that changed. This has to be done because this method is generic and doesn't specify a column!
-        //    Selection will be lost if the getRowForPath() method doesn't find the path specified and the update may not work correctly. Make sure the path passed is correct!
-        for(int col = 0; col < getColumnCount(); col++) fireTableCellUpdated(tree.getRowForPath(path), col);
+
+        // Get the row for this TreePath
+        int row = tree.getRowForPath(path);
+        // Fire the event to update all columns for this row provided it is visible to the JTable
+        if (row >= 0) fireTableRowsUpdated(row, row);
     }
 
     /**
      * Same as valueForPathChanged(TreePath, Object) but this allows the user methods to specify which column has been updated.
      *
-     * Selection will be lost if the getRowForPath() method doesn't find the path specified and the update may not work correctly. Make sure the path passed is correct!
+     * The cell will only get updated if getRowForPath() method can find the row (and it is not under a collapsed parent.)
      *
      * @param path - path to the node that the user has altered
      * @param int - column number that has been changed.
@@ -389,8 +391,11 @@ public abstract class AbstractTreeTableModel extends AbstractTableModel implemen
         // Fire the events that this node has changed
         nodeChanged(aNode);
 
-        // Fire the event to Update the specified column of this row
-        fireTableCellUpdated(tree.getRowForPath(path), column);
+        // Get the row for this TreePath
+        int row = tree.getRowForPath(path);
+        // Fire the event to update the specified cell provided that it is visible to the JTable
+        if (row >= 0) fireTableCellUpdated(row, column);
+        }
     }
 
     /**
